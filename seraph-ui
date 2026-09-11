@@ -237,6 +237,7 @@ function Window.new(options)
     self.Title = nil
     self.Tabs = {}          -- map: tabName -> {btn, stroke, icon, label, page}
     self.TabObjects = {}    -- map: tabName -> Tab object
+    self.TabOrder = {}      -- ordered list of tab names
     self.Pages = {}         -- map: tabName -> ScrollingFrame
     self.Registry = {
         toggles = {},
@@ -343,6 +344,7 @@ function Window:CreateTab(name, icon)
     end
     local tab = Tab.new(self, name, icon)
     self.TabObjects[name] = tab
+    table.insert(self.TabOrder, name)
     return tab
 end
 
@@ -579,8 +581,10 @@ function Window:_createUI()
     self.ContentArea = ContentArea
 
     -- Build every registered tab
+    -- Build every registered tab (in creation order)
     local firstTabName = nil
-    for name, tab in pairs(self.TabObjects) do
+    for _, name in ipairs(self.TabOrder) do
+        local tab = self.TabObjects[name]
         if not firstTabName then firstTabName = name end
 
         -- Create page
