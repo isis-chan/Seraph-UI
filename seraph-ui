@@ -1,26 +1,6 @@
 --[[
     Seraph UI Library
     A glassmorphism-styled UI library for Roblox executors.
-    
-    Usage:
-        local Seraph = loadstring(game:HttpGet("YOUR_RAW_URL"))()
-        local Window = Seraph:CreateWindow({
-            Title = "Seraph",
-            Logo = "rbxassetid://93199758328458",
-            IntroLogo = "rbxassetid://93199758328458",
-            IntroSound = "rbxassetid://6577321647",
-            WithIntro = true,
-            WithSound = true,
-            ConfigFolder = "SeraphConfigs",
-        })
-        local Tab = Window:CreateTab("Combat", "rbxassetid://4391741881")
-        Tab:CreateSeparator("Combat")
-        Tab:CreateToggle({...})
-        Tab:CreateSlider({...})
-        Tab:CreateDropdown({...})
-        Tab:CreateKeybind({...})
-        Tab:CreateButton({...})
-        Tab:CreateInput({...})
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -205,6 +185,44 @@ local function playIntro(options, onComplete)
 end
 
 -- ============================================================
+-- TAB CLASS (declared early so CreateTab can return real Tab objects)
+-- ============================================================
+
+local Tab = {}
+Tab.__index = Tab
+
+function Tab.new(window, name, icon)
+    local self = setmetatable({}, Tab)
+    self.Window = window
+    self.Name = name
+    self.Icon = icon or "rbxassetid://135608228388978"
+    self.Page = nil           -- set when UI is built
+    self.WidgetQueue = {}     -- queued widget builders to run once Page exists
+    self.IsBuilt = false
+    return self
+end
+
+-- Internal: actually run a widget builder function
+-- If the page exists, run immediately; otherwise queue it.
+function Tab:_enqueue(fn)
+    if self.IsBuilt and self.Page then
+        fn(self.Page)
+    else
+        table.insert(self.WidgetQueue, fn)
+    end
+end
+
+-- Called by Window after UI is built
+function Tab:_flushQueue(page)
+    self.Page = page
+    self.IsBuilt = true
+    for _, fn in ipairs(self.WidgetQueue) do
+        fn(page)
+    end
+    self.WidgetQueue = {}
+end
+
+-- ============================================================
 -- WINDOW CLASS
 -- ============================================================
 
@@ -216,8 +234,10 @@ function Window.new(options)
     self.Options = options or {}
     self.ScreenGui = nil
     self.Main = nil
-    self.Tabs = {}
-    self.Pages = {}
+    self.Title = nil
+    self.Tabs = {}          -- map: tabName -> {btn, stroke, icon, label, page}
+    self.TabObjects = {}    -- map: tabName -> Tab object
+    self.Pages = {}         -- map: tabName -> ScrollingFrame
     self.Registry = {
         toggles = {},
         sliders = {},
@@ -302,20 +322,14 @@ function Window:_deleteConfigFile(name)
     end)
 end
 
--- Called after the window and all tabs are built
 function Window:Build()
     if self.ScreenGui then return end
-
-    self:CreateIntroIfNeeded(function()
-        self:_createUI()
-    end)
-end
-
-function Window:CreateIntroIfNeeded(callback)
     if self.Options.WithIntro then
-        playIntro(self.Options, callback)
+        playIntro(self.Options, function()
+            self:_createUI()
+        end)
     else
-        callback()
+        self:_createUI()
     end
 end
 
@@ -324,86 +338,11 @@ end
 -- ============================================================
 
 function Window:CreateTab(name, icon)
-    local tab = {}
-    tab.Name = name
-    tab.Icon = icon or "rbxassetid://135608228388978"
-    tab.Window = self
-    tab.Widgets = {}
-
-    -- Create the page (deferred until UI is built)
-    tab._pendingCreate = function(parentContentArea)
-        local page = Instance.new("ScrollingFrame")
-        page.Name = name .. "Page"
-        page.Size = UDim2.new(1, -16, 1, -16)
-        page.Position = UDim2.new(0, 8, 0, 8)
-        page.BackgroundTransparency = 1
-        page.BorderSizePixel = 0
-        page.ScrollBarThickness = 0
-        page.ScrollBarImageTransparency = 1
-        page.Visible = false
-        page.Parent = parentContentArea
-
-        local pageList = Instance.new("UIListLayout")
-        pageList.SortOrder = Enum.SortOrder.LayoutOrder
-        pageList.Padding = UDim.new(0, 8)
-        pageList.Parent = page
-
-        self.Pages[name] = page
-        return page
+    if self.TabObjects[name] then
+        return self.TabObjects[name]
     end
-
-    tab._pendingCreateButton = function(sidebar)
-        local tabBtn = Instance.new("TextButton")
-        tabBtn.Name = name .. "Tab"
-        tabBtn.Size = UDim2.new(1, 0, 0, 36)
-        tabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        tabBtn.BackgroundTransparency = 0.95
-        tabBtn.Text = ""
-        tabBtn.AutoButtonColor = false
-        tabBtn.Parent = sidebar
-
-        local tabCorner = Instance.new("UICorner")
-        tabCorner.CornerRadius = UDim.new(0, 8)
-        tabCorner.Parent = tabBtn
-
-        local tabStroke = Instance.new("UIStroke")
-        tabStroke.Thickness = 1
-        tabStroke.Color = Color3.fromRGB(255, 255, 255)
-        tabStroke.Transparency = 1
-        tabStroke.Parent = tabBtn
-
-        local iconImg = Instance.new("ImageLabel")
-        iconImg.Name = "Icon"
-        iconImg.Size = UDim2.new(0, 18, 0, 18)
-        iconImg.Position = UDim2.new(0, 10, 0.5, -9)
-        iconImg.BackgroundTransparency = 1
-        iconImg.Image = tab.Icon
-        iconImg.ImageColor3 = Color3.fromRGB(180, 180, 200)
-        iconImg.Parent = tabBtn
-
-        local label = Instance.new("TextLabel")
-        label.Name = "Label"
-        label.Size = UDim2.new(1, -38, 1, 0)
-        label.Position = UDim2.new(0, 34, 0, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.Ubuntu
-        label.Text = name
-        label.TextColor3 = Color3.fromRGB(180, 180, 200)
-        label.TextSize = 13
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = tabBtn
-
-        self.Tabs[name] = {btn = tabBtn, stroke = tabStroke, icon = iconImg, label = label, page = self.Pages[name]}
-
-        tabBtn.MouseButton1Click:Connect(function()
-            self:ActivateTab(name)
-        end)
-    end
-
-    table.insert(self._PendingTabs or {}, tab)
-    self._PendingTabs = self._PendingTabs or {}
-    table.insert(self._PendingTabs, tab)
-
+    local tab = Tab.new(self, name, icon)
+    self.TabObjects[name] = tab
     return tab
 end
 
@@ -480,7 +419,6 @@ function Window:_createUI()
         TweenService:Create(MainStroke, TweenInfo.new(0.5), {Transparency = 0.85}):Play()
     end)
 
-    -- Glass shine
     local GlassShine = Instance.new("Frame")
     GlassShine.Name = "GlassShine"
     GlassShine.Size = UDim2.new(1, 200, 1, 200)
@@ -640,16 +578,84 @@ function Window:_createUI()
     self.Sidebar = Sidebar
     self.ContentArea = ContentArea
 
-    -- Build all pending tabs
-    local pending = self._PendingTabs or {}
-    for _, tab in ipairs(pending) do
-        tab._pendingCreate(ContentArea)
-        tab._pendingCreateButton(Sidebar)
+    -- Build every registered tab
+    local firstTabName = nil
+    for name, tab in pairs(self.TabObjects) do
+        if not firstTabName then firstTabName = name end
+
+        -- Create page
+        local page = Instance.new("ScrollingFrame")
+        page.Name = name .. "Page"
+        page.Size = UDim2.new(1, -16, 1, -16)
+        page.Position = UDim2.new(0, 8, 0, 8)
+        page.BackgroundTransparency = 1
+        page.BorderSizePixel = 0
+        page.ScrollBarThickness = 0
+        page.ScrollBarImageTransparency = 1
+        page.Visible = false
+        page.Parent = ContentArea
+
+        local pageList = Instance.new("UIListLayout")
+        pageList.SortOrder = Enum.SortOrder.LayoutOrder
+        pageList.Padding = UDim.new(0, 8)
+        pageList.Parent = page
+
+        self.Pages[name] = page
+
+        -- Create sidebar button
+        local tabBtn = Instance.new("TextButton")
+        tabBtn.Name = name .. "Tab"
+        tabBtn.Size = UDim2.new(1, 0, 0, 36)
+        tabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        tabBtn.BackgroundTransparency = 0.95
+        tabBtn.Text = ""
+        tabBtn.AutoButtonColor = false
+        tabBtn.Parent = Sidebar
+
+        local tabCorner = Instance.new("UICorner")
+        tabCorner.CornerRadius = UDim.new(0, 8)
+        tabCorner.Parent = tabBtn
+
+        local tabStroke = Instance.new("UIStroke")
+        tabStroke.Thickness = 1
+        tabStroke.Color = Color3.fromRGB(255, 255, 255)
+        tabStroke.Transparency = 1
+        tabStroke.Parent = tabBtn
+
+        local iconImg = Instance.new("ImageLabel")
+        iconImg.Name = "Icon"
+        iconImg.Size = UDim2.new(0, 18, 0, 18)
+        iconImg.Position = UDim2.new(0, 10, 0.5, -9)
+        iconImg.BackgroundTransparency = 1
+        iconImg.Image = tab.Icon
+        iconImg.ImageColor3 = Color3.fromRGB(180, 180, 200)
+        iconImg.Parent = tabBtn
+
+        local label = Instance.new("TextLabel")
+        label.Name = "Label"
+        label.Size = UDim2.new(1, -38, 1, 0)
+        label.Position = UDim2.new(0, 34, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.Ubuntu
+        label.Text = name
+        label.TextColor3 = Color3.fromRGB(180, 180, 200)
+        label.TextSize = 13
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = tabBtn
+
+        self.Tabs[name] = {btn = tabBtn, stroke = tabStroke, icon = iconImg, label = label, page = page}
+
+        tabBtn.MouseButton1Click:Connect(function()
+            self:ActivateTab(name)
+        end)
+
+        -- Flush any widgets that were queued before UI was built
+        tab:_flushQueue(page)
     end
 
     -- Activate first tab
-    if #pending > 0 then
-        self:ActivateTab(pending[1].Name)
+    if firstTabName then
+        self:ActivateTab(firstTabName)
     end
 
     -- Bind internal toggle UI key
@@ -686,10 +692,12 @@ function Window:_createUI()
         end
     end)
 
-    -- Build configs tab content AFTER tabs are created
-    self:_buildConfigsPage()
+    -- Build configs page (only if a "Configs" tab exists)
+    if self.TabObjects["Configs"] then
+        self:_buildConfigsPage()
+    end
 
-    -- Auto-load default config (delayed so intro tween doesn't overwrite UI scale)
+    -- Auto-load default config
     if self.DefaultConfig then
         local data = self:_loadConfigFile(self.DefaultConfig)
         if data then
@@ -726,7 +734,7 @@ function Window:SetToggleUIKey(keyCode)
 end
 
 -- ============================================================
--- WINDOW: CREATE SEPARATOR (internal helper)
+-- SEPARATOR HELPER
 -- ============================================================
 
 local function createSeparator(parentPage, text)
@@ -752,43 +760,31 @@ end
 -- TAB METHODS: Widgets
 -- ============================================================
 
-local Tab = {}
-Tab.__index = Tab
-
--- Wire up tab metatable so Window:CreateTab returns a Tab object
--- (We'll use a function on the tab table directly instead for simplicity)
-
-local function attachTabMethods(tab)
-    local window = tab.Window
-
-    --[[
-        CreateSeparator(text)
-        A horizontal section header text.
-    ]]
-    function tab:CreateSeparator(text)
-        local page = window.Pages[tab.Name]
-        if not page then
-            -- Defer until page is built
-            table.insert(tab.Widgets, {type = "separator", text = text})
-            return
-        end
+--[[
+    CreateSeparator(text)
+    A horizontal section header text.
+]]
+function Tab:CreateSeparator(text)
+    self:_enqueue(function(page)
         createSeparator(page, text)
-    end
+    end)
+end
 
-    --[[
-        CreateToggle({
-            Name = "Auto Aim",
-            Default = true,
-            Keybind = Enum.KeyCode.E,   -- optional; adds a bind button
-            Callback = function(state) end
-        })
-    ]]
-    function tab:CreateToggle(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateToggle({
+        Name = "Auto Aim",
+        Default = true,
+        Keybind = Enum.KeyCode.E,   -- optional
+        Callback = function(state) end
+    })
+]]
+function Tab:CreateToggle(config)
+    local window = self.Window
+    self:_enqueue(function(page)
         local name = config.Name or "Toggle"
         local default = config.Default or false
         local callback = config.Callback or function() end
-        local hasBind = config.Keybind ~= nil or config.HasKeybind == true
+        local hasBind = config.Keybind ~= nil
         local defaultBind = config.Keybind
 
         local container = Instance.new("Frame")
@@ -947,20 +943,19 @@ local function attachTabMethods(tab)
             end
         }
         table.insert(window.Registry.toggles, obj)
-        return obj
-    end
+    end)
+end
 
-    --[[
-        CreateSlider({
-            Name = "Walk Speed",
-            Min = 16,
-            Max = 200,
-            Default = 16,
-            Callback = function(value) end
-        })
-    ]]
-    function tab:CreateSlider(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateSlider({
+        Name = "Walk Speed",
+        Min = 16, Max = 200, Default = 16,
+        Callback = function(value) end
+    })
+]]
+function Tab:CreateSlider(config)
+    local window = self.Window
+    self:_enqueue(function(page)
         local name = config.Name or "Slider"
         local min = config.Min or 0
         local max = config.Max or 100
@@ -1082,20 +1077,21 @@ local function attachTabMethods(tab)
             end
         }
         table.insert(window.Registry.sliders, obj)
-        return obj
-    end
+    end)
+end
 
-    --[[
-        CreateDropdown({
-            Name = "Hitbox Part",
-            Options = {"Head", "HumanoidRootPart", "Torso"},
-            Default = "Head",  -- or table if Multi = true
-            Multi = false,
-            Callback = function(selected) end
-        })
-    ]]
-    function tab:CreateDropdown(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateDropdown({
+        Name = "Hitbox Part",
+        Options = {"Head", "HumanoidRootPart", "Torso"},
+        Default = "Head",  -- or table if Multi = true
+        Multi = false,
+        Callback = function(selected) end
+    })
+]]
+function Tab:CreateDropdown(config)
+    local window = self.Window
+    self:_enqueue(function(page)
         local name = config.Name or "Dropdown"
         local options = config.Options or {}
         local default = config.Default
@@ -1286,18 +1282,19 @@ local function attachTabMethods(tab)
             end
         }
         table.insert(window.Registry.dropdowns, obj)
-        return obj
-    end
+    end)
+end
 
-    --[[
-        CreateKeybind({
-            Name = "Toggle UI Key",
-            Default = Enum.KeyCode.RightShift,
-            Callback = function(keyCode) end
-        })
-    ]]
-    function tab:CreateKeybind(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateKeybind({
+        Name = "Toggle UI Key",
+        Default = Enum.KeyCode.RightShift,
+        Callback = function(keyCode) end
+    })
+]]
+function Tab:CreateKeybind(config)
+    local window = self.Window
+    self:_enqueue(function(page)
         local name = config.Name or "Keybind"
         local defaultKey = config.Default
         local callback = config.Callback or function() end
@@ -1401,18 +1398,18 @@ local function attachTabMethods(tab)
             getKey = function() return boundKey end
         }
         table.insert(window.Registry.keybinds, obj)
-        return obj
-    end
+    end)
+end
 
-    --[[
-        CreateButton({
-            Name = "Reset Settings",
-            Icon = "rbxassetid://...",  -- optional
-            Callback = function() end
-        })
-    ]]
-    function tab:CreateButton(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateButton({
+        Name = "Reset",
+        Icon = "rbxassetid://...",  -- optional
+        Callback = function() end
+    })
+]]
+function Tab:CreateButton(config)
+    self:_enqueue(function(page)
         local name = config.Name or "Button"
         local iconId = config.Icon or "rbxassetid://135608228388978"
         local callback = config.Callback or function() end
@@ -1451,7 +1448,7 @@ local function attachTabMethods(tab)
         label.Font = Enum.Font.Ubuntu
         label.Text = name
         label.TextColor3 = Color3.fromRGB(220, 220, 235)
-        label.TextSize = 14 * math.min(window.CurrentScale, 1.2)
+        label.TextSize = 14 * math.min(self.Window.CurrentScale, 1.2)
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = button
 
@@ -1467,18 +1464,18 @@ local function attachTabMethods(tab)
         end)
 
         button.MouseButton1Click:Connect(callback)
-        return button
-    end
+    end)
+end
 
-    --[[
-        CreateInput({
-            Name = "Config Name",
-            Placeholder = "Enter name...",
-            Callback = function(text) end
-        })
-    ]]
-    function tab:CreateInput(config)
-        local page = window.Pages[tab.Name]
+--[[
+    CreateInput({
+        Name = "",
+        Placeholder = "Enter text...",
+        Callback = function(text) end
+    })
+]]
+function Tab:CreateInput(config)
+    self:_enqueue(function(page)
         local name = config.Name or ""
         local placeholder = config.Placeholder or "Enter text..."
         local callback = config.Callback or function() end
@@ -1509,7 +1506,7 @@ local function attachTabMethods(tab)
         input.PlaceholderColor3 = Color3.fromRGB(120, 120, 140)
         input.Text = name
         input.TextColor3 = Color3.fromRGB(220, 220, 235)
-        input.TextSize = 13 * math.min(window.CurrentScale, 1.2)
+        input.TextSize = 13 * math.min(self.Window.CurrentScale, 1.2)
         input.TextXAlignment = Enum.TextXAlignment.Left
         input.ClearTextOnFocus = false
         input.Parent = container
@@ -1525,19 +1522,10 @@ local function attachTabMethods(tab)
         input.FocusLost:Connect(function()
             callback(input.Text)
         end)
-        return input
-    end
 
-    return tab
-end
-
--- Monkeypatch CreateTab to attach methods
-local originalCreateTab = Window.CreateTab
-function Window:CreateTab(name, icon)
-    local tab = originalCreateTab(self, name, icon)
-    tab.Window = self
-    attachTabMethods(tab)
-    return tab
+        -- Return a handle so the user can read/write the value later
+        self.Window._lastInput = input
+    end)
 end
 
 -- ============================================================
@@ -1674,7 +1662,6 @@ function Window:_buildConfigsPage()
 
     createSeparator(page, "Create Configuration")
 
-    -- Name input
     local nameContainer = Instance.new("Frame")
     nameContainer.Size = UDim2.new(1, -6, 0, 44)
     nameContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1901,20 +1888,6 @@ end
 -- SERAPH ROOT API
 -- ============================================================
 
---[[
-    Seraph:CreateWindow(options) -> Window
-    
-    Options table:
-        Title        = "Seraph"                        -- Window title
-        Logo         = "rbxassetid://..."              -- Top-left logo
-        IntroLogo    = "rbxassetid://..."              -- Intro animation logo (optional)
-        IntroSound   = "rbxassetid://..."              -- Intro sound (optional)
-        WithIntro    = true                            -- Play intro animation
-        WithSound    = true                            -- Enable sounds
-        ConfigFolder = "SeraphConfigs"                 -- Folder name for saved configs
-        Width        = 620                             -- Base width
-        Height       = 380                             -- Base height
-]]
 function Seraph:CreateWindow(options)
     options = options or {}
     local window = Window.new(options)
