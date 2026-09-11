@@ -582,10 +582,9 @@ function Window:_createUI()
 
     -- Build every registered tab
     -- Build every registered tab (in creation order)
-    local firstTabName = nil
+       -- Build every registered tab (in creation order)
     for _, name in ipairs(self.TabOrder) do
         local tab = self.TabObjects[name]
-        if not firstTabName then firstTabName = name end
 
         -- Create page
         local page = Instance.new("ScrollingFrame")
@@ -614,6 +613,7 @@ function Window:_createUI()
         tabBtn.BackgroundTransparency = 0.95
         tabBtn.Text = ""
         tabBtn.AutoButtonColor = false
+        tabBtn.LayoutOrder = #self.TabOrder and table.find(self.TabOrder, name) or 0
         tabBtn.Parent = Sidebar
 
         local tabCorner = Instance.new("UICorner")
@@ -658,8 +658,8 @@ function Window:_createUI()
     end
 
     -- Activate first tab
-    if firstTabName then
-        self:ActivateTab(firstTabName)
+    if #self.TabOrder > 0 then
+        self:ActivateTab(self.TabOrder[1])
     end
 
     -- Bind internal toggle UI key
