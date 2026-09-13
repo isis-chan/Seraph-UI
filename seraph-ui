@@ -706,7 +706,7 @@ function Window:_createUI()
         local data = self:_loadConfigFile(self.DefaultConfig)
         if data then
             task.delay(0.6, function()
-                self:ApplyState(data, true)
+                self:ApplyState(data, false)
             end)
         end
     end
