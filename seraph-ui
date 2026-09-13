@@ -1899,4 +1899,4 @@ function Seraph:CreateWindow(options)
     return window
 end
 
-return Serap
+return Seraph
