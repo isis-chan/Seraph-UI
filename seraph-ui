@@ -935,7 +935,7 @@ function Tab:CreateToggle(config)
         end
 
         local obj = {
-            key = name,
+            key = self.Name .. "/" .. name,
             setState = setState,
             getState = function() return state end,
             getBind = function() return boundKey end,
@@ -1069,7 +1069,7 @@ function Tab:CreateSlider(config)
         end)
 
         local obj = {
-            key = name,
+            key = self.Name .. "/" .. name,
             setValue = function(v, silent)
                 local pct = (v - min) / (max - min)
                 update(pct, v, silent)
@@ -1258,7 +1258,7 @@ function Tab:CreateDropdown(config)
         selectBtn.MouseButton1Click:Connect(toggleDropdown)
 
         local obj = {
-            key = name,
+            key = self.Name .. "/" .. name,
             isMulti = isMulti,
             options = options,
             setSelected = function(data, silent)
@@ -1391,7 +1391,7 @@ function Tab:CreateKeybind(config)
         end)
 
         local obj = {
-            key = name,
+            key = self.Name .. "/" .. name,
             setKey = function(newKey, silent)
                 boundKey = newKey
                 if textLabel then
