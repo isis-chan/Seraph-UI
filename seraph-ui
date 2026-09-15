@@ -1042,10 +1042,12 @@ function Window:_createUI()
 
     self._enterScaleMode = enterScaleMode
 
+    -- Build configs page
     if self.TabObjects["Configs"] then
         self:_buildConfigsPage()
     end
 
+    -- Auto-load default config
     if self.DefaultConfig then
         local data = self:_loadConfigFile(self.DefaultConfig)
         if data then
