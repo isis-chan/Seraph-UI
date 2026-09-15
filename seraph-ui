@@ -1303,17 +1303,22 @@ function Seraph:CreateWindow(config)
         stroke.Transparency = 0.92
         stroke.Parent = button
 
-        local icon = Instance.new("ImageLabel")
-        icon.Size = UDim2.new(0, 16, 0, 16)
-        icon.Position = UDim2.new(0, 12, 0.5, -8)
-        icon.BackgroundTransparency = 1
-        icon.Image = iconId or "rbxassetid://135608228388978"
-        icon.ImageColor3 = Color3.fromRGB(160, 170, 200)
-        icon.Parent = button
+        local hasIcon = iconId and iconId ~= ""
+
+        local icon
+        if hasIcon then
+            icon = Instance.new("ImageLabel")
+            icon.Size = UDim2.new(0, 16, 0, 16)
+            icon.Position = UDim2.new(0, 12, 0.5, -8)
+            icon.BackgroundTransparency = 1
+            icon.Image = iconId
+            icon.ImageColor3 = Color3.fromRGB(160, 170, 200)
+            icon.Parent = button
+        end
 
         local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(1, -44, 1, 0)
-        lbl.Position = UDim2.new(0, 36, 0, 0)
+        lbl.Size = UDim2.new(1, hasIcon and -44 or -24, 1, 0)
+        lbl.Position = UDim2.new(0, hasIcon and 36 or 12, 0, 0)
         lbl.BackgroundTransparency = 1
         lbl.Font = Enum.Font.Ubuntu
         lbl.Text = text
@@ -1325,12 +1330,16 @@ function Seraph:CreateWindow(config)
         button.MouseEnter:Connect(function()
             TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.88}):Play()
             TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
-            TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            if icon then
+                TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            end
         end)
         button.MouseLeave:Connect(function()
             TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.94}):Play()
             TweenService:Create(stroke, TweenInfo.new(0.2), {Transparency = 0.92}):Play()
-            TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(160, 170, 200)}):Play()
+            if icon then
+                TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(160, 170, 200)}):Play()
+            end
         end)
 
         if clickCallback then button.MouseButton1Click:Connect(clickCallback) end
