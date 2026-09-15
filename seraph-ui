@@ -180,7 +180,7 @@ function Seraph:CreateWindow(config)
     LogoButton.Position = UDim2.new(0, 16, 0.5, -12)
     LogoButton.BackgroundTransparency = 1
     LogoButton.Image = LogoAsset
-    LogoButton.ImageColor3 = ACCENT.color
+    LogoButton.ImageColor3 = Color3.fromRGB(200, 210, 255)
     LogoButton.Parent = TopBar
 
     LogoButton.MouseEnter:Connect(function()
@@ -190,7 +190,8 @@ function Seraph:CreateWindow(config)
     end)
     LogoButton.MouseLeave:Connect(function()
         TweenService:Create(LogoButton, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-            Rotation = 0, ImageColor3 = ACCENT.color
+            Rotation = 0,
+            ImageColor3 = Color3.fromRGB(200, 210, 255)
         }):Play()
     end)
 
