@@ -302,7 +302,7 @@ function Seraph:CreateWindow(config)
                         if sub:IsA("TextBox") then sub.TextSize = 13 * ts end
                         if sub:IsA("TextButton") then
                             local il = sub:FindFirstChildWhichIsA("TextLabel")
-                            if il then il.TextSize = 13 * ts end
+                            if il then il.TextSize = 14 * ts end
                             if sub.Parent and sub.Parent.Name == "DropdownContainer" then
                                 sub.TextSize = 13 * ts
                             end
@@ -1701,7 +1701,6 @@ function Seraph:CreateWindow(config)
     end)
 
     local scaleOverlayGui, scaleOverlayFrame, scaleLockFrame, doneButton, revertButton
-    local scaleHandles = {}
     local scaleConnections = {}
     local resizingCorner = nil
     local resizeStartMouse, resizeStartSize, resizeStartPos
@@ -1735,11 +1734,6 @@ function Seraph:CreateWindow(config)
         if scaleModeActive then return end
         scaleModeActive = true
         dragging = false
-        local bW, bH = Main.Size.X.Offset, Main.Size.Y.Offset
-        TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, bW + 8, 0, bH + 8),
-            Position = UDim2.new(Main.Position.X.Scale, Main.Position.X.Offset - 4, Main.Position.Y.Scale, Main.Position.Y.Offset - 4)
-        }):Play()
         scaleOverlayGui = Instance.new("ScreenGui")
         scaleOverlayGui.Name = "ScaleModeOverlay"
         scaleOverlayGui.IgnoreGuiInset = true
@@ -1876,11 +1870,6 @@ function Seraph:CreateWindow(config)
             scaleModeActive = false
             resizingCorner = nil
             disconnectScaleConnections()
-            local bW2, bH2 = Main.Size.X.Offset, Main.Size.Y.Offset
-            TweenService:Create(Main, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, bW2 - 8, 0, bH2 - 8),
-                Position = UDim2.new(Main.Position.X.Scale, Main.Position.X.Offset + 4, Main.Position.Y.Scale, Main.Position.Y.Offset + 4)
-            }):Play()
             local ri2 = revertButton:FindFirstChild("Icon")
             local dOut = TweenService:Create(doneButton, TweenInfo.new(0.15), {BackgroundTransparency = 1, TextTransparency = 1})
             local rOut = TweenService:Create(revertButton, TweenInfo.new(0.15), {BackgroundTransparency = 1})
@@ -2201,6 +2190,7 @@ function Seraph:CreateWindow(config)
     end
 
     TopBar.InputBegan:Connect(function(input)
+        if scaleModeActive then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
@@ -2211,6 +2201,7 @@ function Seraph:CreateWindow(config)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
     UserInputService.InputChanged:Connect(function(input)
+        if scaleModeActive then return end
         if dragging and Main and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
