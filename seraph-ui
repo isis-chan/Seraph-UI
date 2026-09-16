@@ -112,7 +112,7 @@ function Seraph:CreateWindow(config)
     Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     Main.BackgroundTransparency = 1
     Main.BorderSizePixel = 0
-    Main.ClipsDescendants = false
+    Main.ClipsDescendants = true
     Main.Visible = false
     Main.Parent = ScreenGui
 
@@ -1704,6 +1704,7 @@ function Seraph:CreateWindow(config)
     local scaleConnections = {}
     local resizingCorner = nil
     local resizeStartMouse, resizeStartSize, resizeStartPos
+    local _scaleTextQueued = false
 
     local function disconnectScaleConnections()
         for _, c in ipairs(scaleConnections) do c:Disconnect() end
@@ -1734,6 +1735,7 @@ function Seraph:CreateWindow(config)
         if scaleModeActive then return end
         scaleModeActive = true
         dragging = false
+        resizingCorner = nil
         scaleOverlayGui = Instance.new("ScreenGui")
         scaleOverlayGui.Name = "ScaleModeOverlay"
         scaleOverlayGui.IgnoreGuiInset = true
@@ -1756,7 +1758,6 @@ function Seraph:CreateWindow(config)
         scaleLockFrame.BackgroundTransparency = 1
         scaleLockFrame.BorderSizePixel = 0
         scaleLockFrame.ZIndex = 1
-        TopBar.ZIndex = 50
         scaleLockFrame.Parent = Main
         local lc = Instance.new("UICorner")
         lc.CornerRadius = MainCorner.CornerRadius
@@ -1829,6 +1830,30 @@ function Seraph:CreateWindow(config)
             applyScaleFull()
         end)
         local rConn = UserInputService.InputChanged:Connect(function(input)
+            if scaleModeActive and input.UserInputType == Enum.UserInputType.MouseMovement and not resizingCorner then
+                local mp = UserInputService:GetMouseLocation()
+                local mainPos = Main.AbsolutePosition
+                local mainSize = Main.AbsoluteSize
+                local cornerSize = 22
+                local nearLeft = mp.X >= mainPos.X - cornerSize and mp.X <= mainPos.X + cornerSize
+                local nearRight = mp.X >= mainPos.X + mainSize.X - cornerSize and mp.X <= mainPos.X + mainSize.X + cornerSize
+                local nearTop = mp.Y >= mainPos.Y - cornerSize and mp.Y <= mainPos.Y + cornerSize
+                local nearBottom = mp.Y >= mainPos.Y + mainSize.Y - cornerSize and mp.Y <= mainPos.Y + mainSize.Y + cornerSize
+                if nearTop and nearLeft then
+                    resizingCorner = "TopLeft"
+                elseif nearTop and nearRight then
+                    resizingCorner = "TopRight"
+                elseif nearBottom and nearLeft then
+                    resizingCorner = "BottomLeft"
+                elseif nearBottom and nearRight then
+                    resizingCorner = "BottomRight"
+                end
+                if resizingCorner then
+                    resizeStartMouse = input.Position
+                    resizeStartSize = Main.Size
+                    resizeStartPos = Main.Position
+                end
+            end
             if resizingCorner and input.UserInputType == Enum.UserInputType.MouseMovement then
                 local delta = input.Position - resizeStartMouse
                 local ms = 250
@@ -1852,10 +1877,18 @@ function Seraph:CreateWindow(config)
                     nX = resizeStartPos.X.Offset + (resizeStartSize.X.Offset - nW)
                     nY = resizeStartPos.Y.Offset + (resizeStartSize.Y.Offset - nH)
                 end
-                Main.Size = UDim2.new(0, nW, 0, nH)
+                if Main.Size.X.Offset ~= nW or Main.Size.Y.Offset ~= nH then
+                    Main.Size = UDim2.new(0, nW, 0, nH)
+                end
                 Main.Position = UDim2.new(resizeStartPos.X.Scale, nX, resizeStartPos.Y.Scale, nY)
                 currentScale = nW / baseWidth
-                applyTextScale()
+                if not _scaleTextQueued then
+                    _scaleTextQueued = true
+                    task.defer(function()
+                        _scaleTextQueued = false
+                        applyTextScale()
+                    end)
+                end
             end
         end)
         table.insert(scaleConnections, rConn)
