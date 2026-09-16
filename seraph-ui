@@ -1829,31 +1829,38 @@ function Seraph:CreateWindow(config)
             currentScale = 1
             applyScaleFull()
         end)
-        local rConn = UserInputService.InputChanged:Connect(function(input)
-            if scaleModeActive and input.UserInputType == Enum.UserInputType.MouseMovement and not resizingCorner then
-                local mp = UserInputService:GetMouseLocation()
-                local mainPos = Main.AbsolutePosition
-                local mainSize = Main.AbsoluteSize
-                local cornerSize = 22
-                local nearLeft = mp.X >= mainPos.X - cornerSize and mp.X <= mainPos.X + cornerSize
-                local nearRight = mp.X >= mainPos.X + mainSize.X - cornerSize and mp.X <= mainPos.X + mainSize.X + cornerSize
-                local nearTop = mp.Y >= mainPos.Y - cornerSize and mp.Y <= mainPos.Y + cornerSize
-                local nearBottom = mp.Y >= mainPos.Y + mainSize.Y - cornerSize and mp.Y <= mainPos.Y + mainSize.Y + cornerSize
-                if nearTop and nearLeft then
-                    resizingCorner = "TopLeft"
-                elseif nearTop and nearRight then
-                    resizingCorner = "TopRight"
-                elseif nearBottom and nearLeft then
-                    resizingCorner = "BottomLeft"
-                elseif nearBottom and nearRight then
-                    resizingCorner = "BottomRight"
-                end
-                if resizingCorner then
-                    resizeStartMouse = input.Position
-                    resizeStartSize = Main.Size
-                    resizeStartPos = Main.Position
-                end
+        local cornerHitboxes = {}
+        do
+            local size = 30
+            local corners = {
+                TopLeft = UDim2.new(0, 0, 0, 0),
+                TopRight = UDim2.new(1, -size, 0, 0),
+                BottomLeft = UDim2.new(0, 0, 1, -size),
+                BottomRight = UDim2.new(1, -size, 1, -size),
+            }
+            for cornerName, pos in pairs(corners) do
+                local hb = Instance.new("TextButton")
+                hb.Name = "ResizeHandle_" .. cornerName
+                hb.Size = UDim2.new(0, size, 0, size)
+                hb.Position = pos
+                hb.BackgroundTransparency = 1
+                hb.Text = ""
+                hb.AutoButtonColor = false
+                hb.ZIndex = 140
+                hb.Parent = Main
+                cornerHitboxes[cornerName] = hb
+                hb.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        resizingCorner = cornerName
+                        resizeStartMouse = input.Position
+                        resizeStartSize = Main.Size
+                        resizeStartPos = Main.Position
+                    end
+                end)
             end
+        end
+
+        local rConn = UserInputService.InputChanged:Connect(function(input)
             if resizingCorner and input.UserInputType == Enum.UserInputType.MouseMovement then
                 local delta = input.Position - resizeStartMouse
                 local ms = 250
@@ -1877,9 +1884,7 @@ function Seraph:CreateWindow(config)
                     nX = resizeStartPos.X.Offset + (resizeStartSize.X.Offset - nW)
                     nY = resizeStartPos.Y.Offset + (resizeStartSize.Y.Offset - nH)
                 end
-                if Main.Size.X.Offset ~= nW or Main.Size.Y.Offset ~= nH then
-                    Main.Size = UDim2.new(0, nW, 0, nH)
-                end
+                Main.Size = UDim2.new(0, nW, 0, nH)
                 Main.Position = UDim2.new(resizeStartPos.X.Scale, nX, resizeStartPos.Y.Scale, nY)
                 currentScale = nW / baseWidth
                 if not _scaleTextQueued then
@@ -1902,6 +1907,11 @@ function Seraph:CreateWindow(config)
             if not scaleModeActive then return end
             scaleModeActive = false
             resizingCorner = nil
+            dragging = false
+            for _, hb in pairs(cornerHitboxes) do
+                hb:Destroy()
+            end
+            cornerHitboxes = {}
             disconnectScaleConnections()
             local ri2 = revertButton:FindFirstChild("Icon")
             local dOut = TweenService:Create(doneButton, TweenInfo.new(0.15), {BackgroundTransparency = 1, TextTransparency = 1})
@@ -2231,7 +2241,9 @@ function Seraph:CreateWindow(config)
         end
     end)
     TopBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
     end)
     UserInputService.InputChanged:Connect(function(input)
         if scaleModeActive then return end
@@ -2241,7 +2253,9 @@ function Seraph:CreateWindow(config)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
     end)
 
     local Window = {}
