@@ -1578,14 +1578,20 @@ function Seraph:CreateWindow(config)
         for _, t in ipairs(registry.toggles) do
             local b = t.getBind()
             if b ~= nil then
-                table.insert(entries, {name = t.key, keyName = shortenKeyName(b), isToggle = true, state = t.getState()})
+                local kn = shortenKeyName(b)
+                if kn ~= "None" then
+                    table.insert(entries, {name = t.key, keyName = kn, isToggle = true, state = t.getState()})
+                end
             end
         end
         for _, k in ipairs(registry.keybinds) do
             if k.key ~= "Toggle UI Key" then
                 local key = k.getKey()
                 if key ~= nil then
-                    table.insert(entries, {name = k.key, keyName = shortenKeyName(key), isToggle = false, state = false})
+                    local kn = shortenKeyName(key)
+                    if kn ~= "None" then
+                        table.insert(entries, {name = k.key, keyName = kn, isToggle = false, state = false})
+                    end
                 end
             end
         end
