@@ -1851,6 +1851,7 @@ function Seraph:CreateWindow(config)
                 cornerHitboxes[cornerName] = hb
                 hb.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
                         resizingCorner = cornerName
                         resizeStartMouse = input.Position
                         resizeStartSize = Main.Size
@@ -1900,6 +1901,7 @@ function Seraph:CreateWindow(config)
         local releaseConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 resizingCorner = nil
+                dragging = false
             end
         end)
         table.insert(scaleConnections, releaseConn)
@@ -2238,11 +2240,6 @@ function Seraph:CreateWindow(config)
             dragging = true
             dragStart = input.Position
             startPos = Main.Position
-        end
-    end)
-    TopBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
