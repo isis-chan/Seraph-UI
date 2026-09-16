@@ -97,7 +97,7 @@ function Seraph:CreateWindow(config)
 
     local tabs = {}
     local pages = {}
-    local registry = { toggles = {}, sliders = {}, dropdowns = {}, keybinds = {}, colorpickers = {} }
+    local registry = { toggles = {}, sliders = {}, dropdowns = {}, keybinds = {}, colorpickers = {}, buttons = {} }
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SeraphUI"
@@ -1577,14 +1577,14 @@ function Seraph:CreateWindow(config)
         local entries = {}
         for _, t in ipairs(registry.toggles) do
             local b = t.getBind()
-            if b then
+            if b ~= nil then
                 table.insert(entries, {name = t.key, keyName = shortenKeyName(b), isToggle = true, state = t.getState()})
             end
         end
         for _, k in ipairs(registry.keybinds) do
             if k.key ~= "Toggle UI Key" then
                 local key = k.getKey()
-                if key then
+                if key ~= nil then
                     table.insert(entries, {name = k.key, keyName = shortenKeyName(key), isToggle = false, state = false})
                 end
             end
@@ -1731,85 +1731,6 @@ function Seraph:CreateWindow(config)
         end)
     end
 
-    local function createHandle(name)
-        local radius = 26
-        local container = Instance.new("Frame")
-        container.Name = "ScaleHandle_" .. name
-        container.BackgroundTransparency = 1
-        container.ZIndex = 120
-        container.Size = UDim2.new(0, radius, 0, radius)
-        container.ClipsDescendants = true
-        container.Parent = Main
-        local isTop = name == "TopLeft" or name == "TopRight"
-        local isLeft = name == "TopLeft" or name == "BottomLeft"
-        local arc = Instance.new("Frame")
-        arc.Name = "Arc"
-        arc.Size = UDim2.new(0, radius * 2, 0, radius * 2)
-        arc.BackgroundTransparency = 1
-        arc.BorderSizePixel = 0
-        arc.ZIndex = 121
-        arc.Parent = container
-        local ac = Instance.new("UICorner")
-        ac.CornerRadius = UDim.new(0, radius)
-        ac.Parent = arc
-        local as = Instance.new("UIStroke")
-        as.Thickness = 0
-        as.Color = ACCENT.color
-        as.Transparency = 1
-        as.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        as.Parent = arc
-        local inset = 1.5
-        if isTop and isLeft then
-            arc.AnchorPoint = Vector2.new(0, 0)
-            arc.Position = UDim2.new(0, inset, 0, inset)
-        elseif isTop and not isLeft then
-            arc.AnchorPoint = Vector2.new(1, 0)
-            arc.Position = UDim2.new(1, -inset, 0, inset)
-        elseif not isTop and isLeft then
-            arc.AnchorPoint = Vector2.new(0, 1)
-            arc.Position = UDim2.new(0, inset, 1, -inset)
-        else
-            arc.AnchorPoint = Vector2.new(1, 1)
-            arc.Position = UDim2.new(1, -inset, 1, -inset)
-        end
-        local hit = Instance.new("TextButton")
-        hit.Name = "Hit"
-        hit.Size = UDim2.new(1, 0, 1, 0)
-        hit.BackgroundTransparency = 1
-        hit.Text = ""
-        hit.AutoButtonColor = false
-        hit.ZIndex = 130
-        hit.Parent = container
-        hit.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                resizingCorner = name
-                resizeStartMouse = input.Position
-                resizeStartSize = Main.Size
-                resizeStartPos = Main.Position
-                TweenService:Create(as, TweenInfo.new(0.15), {Transparency = 0.3, Thickness = 2}):Play()
-            end
-        end)
-        scaleHandles[name] = container
-        return container
-    end
-
-    local function positionHandles()
-        if not scaleHandles.TopLeft then return end
-        local r = 26
-        scaleHandles.TopLeft.Position = UDim2.new(0, 0, 0, 0)
-        scaleHandles.TopRight.Position = UDim2.new(1, -r, 0, 0)
-        scaleHandles.BottomLeft.Position = UDim2.new(0, 0, 1, -r)
-        scaleHandles.BottomRight.Position = UDim2.new(1, -r, 1, -r)
-    end
-
-    local function fadeOutHandle(container)
-        local arc = container:FindFirstChild("Arc")
-        if arc then
-            local stroke = arc:FindFirstChildWhichIsA("UIStroke")
-            if stroke then TweenService:Create(stroke, TweenInfo.new(0.15), {Transparency = 1}):Play() end
-        end
-    end
-
     local function enterScaleMode()
         if scaleModeActive then return end
         scaleModeActive = true
@@ -1857,11 +1778,6 @@ function Seraph:CreateWindow(config)
             end
         end)
         table.insert(scaleConnections, lck)
-        createHandle("TopLeft")
-        createHandle("TopRight")
-        createHandle("BottomLeft")
-        createHandle("BottomRight")
-        positionHandles()
         local buttonHolder = Instance.new("Frame")
         buttonHolder.AnchorPoint = Vector2.new(0.5, 0.5)
         buttonHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -1917,7 +1833,6 @@ function Seraph:CreateWindow(config)
         revertButton.MouseButton1Click:Connect(function()
             currentScale = 1
             applyScaleFull()
-            positionHandles()
         end)
         local rConn = UserInputService.InputChanged:Connect(function(input)
             if resizingCorner and input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -1947,21 +1862,12 @@ function Seraph:CreateWindow(config)
                 Main.Position = UDim2.new(resizeStartPos.X.Scale, nX, resizeStartPos.Y.Scale, nY)
                 currentScale = nW / baseWidth
                 applyTextScale()
-                positionHandles()
             end
         end)
         table.insert(scaleConnections, rConn)
         local releaseConn = UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 and resizingCorner then
-                local h = scaleHandles[resizingCorner]
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 resizingCorner = nil
-                if h then
-                    local arc = h:FindFirstChild("Arc")
-                    if arc then
-                        local stroke = arc:FindFirstChildWhichIsA("UIStroke")
-                        if stroke then stroke.Transparency = 1 end
-                    end
-                end
             end
         end)
         table.insert(scaleConnections, releaseConn)
@@ -1970,10 +1876,6 @@ function Seraph:CreateWindow(config)
             scaleModeActive = false
             resizingCorner = nil
             disconnectScaleConnections()
-            for _, h in pairs(scaleHandles) do fadeOutHandle(h) end
-            local toDestroy = scaleHandles
-            scaleHandles = {}
-            task.delay(0.16, function() for _, h in pairs(toDestroy) do h:Destroy() end end)
             local bW2, bH2 = Main.Size.X.Offset, Main.Size.Y.Offset
             TweenService:Create(Main, TweenInfo.new(0.3), {
                 Size = UDim2.new(0, bW2 - 8, 0, bH2 - 8),
@@ -2024,7 +1926,10 @@ function Seraph:CreateWindow(config)
         if data.sliders then
             for _, s in ipairs(registry.sliders) do
                 local v = data.sliders[s.key]
-                if v ~= nil then s.setValue(v, silent) end
+                if v ~= nil then
+                    s.setValue(v, silent)
+                    s.forceCallback(v)
+                end
             end
         end
         if data.dropdowns then
@@ -2293,10 +2198,6 @@ function Seraph:CreateWindow(config)
         createButton(page, "Overwrite Config", "rbxassetid://15911231575", function()
             if selectedConfig then saveConfigFile(selectedConfig, serializeState()) end
         end)
-        if defaultConfig then
-            local data = loadConfigFile(defaultConfig)
-            if data then task.delay(0.6, function() applyState(data, true) end) end
-        end
     end
 
     TopBar.InputBegan:Connect(function(input)
@@ -2332,6 +2233,8 @@ function Seraph:CreateWindow(config)
     Window.ScreenGui = ScreenGui
     Window.Registry = registry
     Window.Accent = ACCENT
+    Window.Watermark = Watermark
+    Window.KeybindList = KeybindListGui
 
     function Window:SetToggleUIKey(key)
         toggleUIKey = key
@@ -2526,6 +2429,12 @@ function Seraph:CreateWindow(config)
             BackgroundTransparency = 0.25
         }):Play()
         TweenService:Create(MainStroke, TweenInfo.new(0.5), {Transparency = 0.85}):Play()
+        if defaultConfig then
+            task.delay(0.7, function()
+                local data = loadConfigFile(defaultConfig)
+                if data then applyState(data, false) end
+            end)
+        end
     end
 
     if WithIntro then
