@@ -1360,7 +1360,7 @@ function Seraph:CreateWindow(config)
 
     local Watermark = Instance.new("Frame")
     Watermark.Name = "Watermark"
-    Watermark.Size = UDim2.new(0, 200, 0, 34)
+    Watermark.Size = UDim2.new(0, 240, 0, 36)
     Watermark.Position = UDim2.new(0, 20, 0, 20)
     Watermark.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     Watermark.BackgroundTransparency = 0.25
@@ -1388,6 +1388,7 @@ function Seraph:CreateWindow(config)
     wmG.Rotation = 45
     wmG.Parent = Watermark
 
+    -- Logo
     local wmLogo = Instance.new("ImageLabel")
     wmLogo.Name = "Logo"
     wmLogo.Size = UDim2.new(0, 18, 0, 18)
@@ -1398,9 +1399,10 @@ function Seraph:CreateWindow(config)
     wmLogo.ZIndex = 51
     wmLogo.Parent = Watermark
 
+    -- Title (Seraph)
     local wmTitle = Instance.new("TextLabel")
     wmTitle.Name = "Title"
-    wmTitle.Size = UDim2.new(0, 54, 1, 0)
+    wmTitle.Size = UDim2.new(0, 60, 1, 0)
     wmTitle.Position = UDim2.new(0, 36, 0, 0)
     wmTitle.BackgroundTransparency = 1
     wmTitle.Font = Enum.Font.GothamBold
@@ -1418,38 +1420,52 @@ function Seraph:CreateWindow(config)
     })
     wmTG.Parent = wmTitle
 
+    -- Separator 1
+    local wmSep1 = Instance.new("Frame")
+    wmSep1.Name = "Sep1"
+    wmSep1.Size = UDim2.new(0, 1, 0, 16)
+    wmSep1.Position = UDim2.new(0, 100, 0.5, -8)
+    wmSep1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    wmSep1.BackgroundTransparency = 0.75
+    wmSep1.BorderSizePixel = 0
+    wmSep1.ZIndex = 51
+    wmSep1.Parent = Watermark
 
+    -- FPS (Code font, soft cyan-green)
     local wmFps = Instance.new("TextLabel")
     wmFps.Name = "FPS"
-    wmFps.Size = UDim2.new(0, 48, 1, 0)
-    wmFps.Position = UDim2.new(0, 86, 0, 0)
+    wmFps.Size = UDim2.new(0, 52, 1, 0)
+    wmFps.Position = UDim2.new(0, 108, 0, 0)
     wmFps.BackgroundTransparency = 1
-    wmFps.Font = Enum.Font.GothamBold
+    wmFps.Font = Enum.Font.GothamMedium
     wmFps.Text = "0 FPS"
-    wmFps.TextColor3 = Color3.fromRGB(150, 220, 150)
-    wmFps.TextSize = 12
+    wmFps.TextColor3 = Color3.fromRGB(130, 235, 170)
+    wmFps.TextSize = 13
     wmFps.TextXAlignment = Enum.TextXAlignment.Center
     wmFps.ZIndex = 51
     wmFps.Parent = Watermark
 
+    -- Separator 2
     local wmSep2 = Instance.new("Frame")
-    wmSep2.Size = UDim2.new(0, 1, 0, 14)
-    wmSep2.Position = UDim2.new(0, 136, 0.5, -7)
+    wmSep2.Name = "Sep2"
+    wmSep2.Size = UDim2.new(0, 1, 0, 16)
+    wmSep2.Position = UDim2.new(0, 164, 0.5, -8)
     wmSep2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    wmSep2.BackgroundTransparency = 0.8
+    wmSep2.BackgroundTransparency = 0.75
     wmSep2.BorderSizePixel = 0
     wmSep2.ZIndex = 51
     wmSep2.Parent = Watermark
 
+    -- Ping (Code font, warm amber)
     local wmPing = Instance.new("TextLabel")
     wmPing.Name = "Ping"
-    wmPing.Size = UDim2.new(0, 48, 1, 0)
-    wmPing.Position = UDim2.new(0, 142, 0, 0)
+    wmPing.Size = UDim2.new(0, 52, 1, 0)
+    wmPing.Position = UDim2.new(0, 172, 0, 0)
     wmPing.BackgroundTransparency = 1
-    wmPing.Font = Enum.Font.GothamBold
+    wmPing.Font = Enum.Font.GothamMedium
     wmPing.Text = "0 ms"
-    wmPing.TextColor3 = Color3.fromRGB(230, 200, 130)
-    wmPing.TextSize = 12
+    wmPing.TextColor3 = Color3.fromRGB(245, 205, 120)
+    wmPing.TextSize = 13
     wmPing.TextXAlignment = Enum.TextXAlignment.Center
     wmPing.ZIndex = 51
     wmPing.Parent = Watermark
