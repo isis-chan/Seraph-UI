@@ -505,6 +505,13 @@ function Seraph:CreateWindow(config)
     end
 
     local function createSlider(page, key, text, min, max, default, callback)
+        local DECIMALS = 2
+        local PRECISION = 10 ^ DECIMALS
+
+        local function roundTo(v)
+            return math.floor(v * PRECISION + 0.5) / PRECISION
+        end
+
         local container = Instance.new("Frame")
         container.Size = UDim2.new(1, -6, 0, 50)
         container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -537,7 +544,7 @@ function Seraph:CreateWindow(config)
         valBox.Position = UDim2.new(0.7, -12, 0, 6)
         valBox.BackgroundTransparency = 1
         valBox.Font = Enum.Font.Ubuntu
-        valBox.Text = tostring(default)
+        valBox.Text = string.format("%.2f", default)
         valBox.TextColor3 = Color3.fromRGB(160, 170, 200)
         valBox.TextSize = 12 * math.min(currentScale, 1.2)
         valBox.TextXAlignment = Enum.TextXAlignment.Right
@@ -572,11 +579,16 @@ function Seraph:CreateWindow(config)
 
         local function update(pct, val, silent)
             local cp = math.clamp(pct, 0, 1)
-            local value = val or math.floor(min + (max - min) * cp)
+            local value
+            if val ~= nil then
+                value = roundTo(val)
+            else
+                value = roundTo(min + (max - min) * cp)
+            end
             value = math.clamp(value, min, max)
             currentValue = value
             fill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
-            valBox.Text = tostring(value)
+            valBox.Text = string.format("%.2f", value)
             if not silent and callback then callback(value) end
         end
 
@@ -608,7 +620,7 @@ function Seraph:CreateWindow(config)
                 local pct = (num - min) / (max - min)
                 update(pct, num)
             else
-                valBox.Text = tostring(currentValue)
+                valBox.Text = string.format("%.2f", currentValue)
             end
         end)
 
