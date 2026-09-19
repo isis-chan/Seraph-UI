@@ -1346,107 +1346,101 @@ function Seraph:CreateWindow(config)
         return button
     end
 
-local Watermark = Instance.new("Frame")
-Watermark.Name = "Watermark"
-Watermark.Size = UDim2.new(0, 200, 0, 34)
-Watermark.Position = UDim2.new(0, 20, 0, 20)
-Watermark.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Watermark.BackgroundTransparency = 0.25
-Watermark.BorderSizePixel = 0
-Watermark.ZIndex = 50
-Watermark.Parent = ScreenGui
-Watermark.Visible = false
-Watermark.AutomaticSize = Enum.AutomaticSize.X
+    local Watermark = Instance.new("Frame")
+    Watermark.Name = "Watermark"
+    Watermark.Size = UDim2.new(0, 200, 0, 34)
+    Watermark.Position = UDim2.new(0, 20, 0, 20)
+    Watermark.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    Watermark.BackgroundTransparency = 0.25
+    Watermark.BorderSizePixel = 0
+    Watermark.ZIndex = 50
+    Watermark.Parent = ScreenGui
+    Watermark.Visible = false
 
-local wmC = Instance.new("UICorner")
-wmC.CornerRadius = UDim.new(0, 10)
-wmC.Parent = Watermark
+    local wmC = Instance.new("UICorner")
+    wmC.CornerRadius = UDim.new(0, 10)
+    wmC.Parent = Watermark
 
-local wmS = Instance.new("UIStroke")
-wmS.Thickness = 1
-wmS.Color = Color3.fromRGB(255, 255, 255)
-wmS.Transparency = 0.85
-wmS.Parent = Watermark
+    local wmS = Instance.new("UIStroke")
+    wmS.Thickness = 1
+    wmS.Color = Color3.fromRGB(255, 255, 255)
+    wmS.Transparency = 0.85
+    wmS.Parent = Watermark
 
-local wmG = Instance.new("UIGradient")
-wmG.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 180, 200)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 120, 150))
-})
-wmG.Rotation = 45
-wmG.Parent = Watermark
+    local wmG = Instance.new("UIGradient")
+    wmG.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 180, 200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 120, 150))
+    })
+    wmG.Rotation = 45
+    wmG.Parent = Watermark
 
-local wmLayout = Instance.new("UIListLayout")
-wmLayout.FillDirection = Enum.FillDirection.Horizontal
-wmLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-wmLayout.SortOrder = Enum.SortOrder.LayoutOrder
-wmLayout.Padding = UDim.new(0, 8)
-wmLayout.Parent = Watermark
+    local wmLogo = Instance.new("ImageLabel")
+    wmLogo.Name = "Logo"
+    wmLogo.Size = UDim2.new(0, 18, 0, 18)
+    wmLogo.Position = UDim2.new(0, 10, 0.5, -9)
+    wmLogo.BackgroundTransparency = 1
+    wmLogo.Image = LogoAsset
+    wmLogo.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    wmLogo.ZIndex = 51
+    wmLogo.Parent = Watermark
 
-local wmPad = Instance.new("UIPadding")
-wmPad.PaddingLeft = UDim.new(0, 10)
-wmPad.PaddingRight = UDim.new(0, 10)
-wmPad.Parent = Watermark
+    local wmTitle = Instance.new("TextLabel")
+    wmTitle.Name = "Title"
+    wmTitle.Size = UDim2.new(0, 54, 1, 0)
+    wmTitle.Position = UDim2.new(0, 36, 0, 0)
+    wmTitle.BackgroundTransparency = 1
+    wmTitle.Font = Enum.Font.GothamBold
+    wmTitle.Text = TitleText
+    wmTitle.TextColor3 = Color3.fromRGB(240, 240, 255)
+    wmTitle.TextSize = 14
+    wmTitle.TextXAlignment = Enum.TextXAlignment.Left
+    wmTitle.ZIndex = 51
+    wmTitle.Parent = Watermark
 
-local wmLogo = Instance.new("ImageLabel")
-wmLogo.Name = "Logo"
-wmLogo.Size = UDim2.new(0, 18, 0, 18)
-wmLogo.BackgroundTransparency = 1
-wmLogo.Image = LogoAsset
-wmLogo.ImageColor3 = Color3.fromRGB(255, 255, 255)
-wmLogo.ZIndex = 51
-wmLogo.LayoutOrder = 1
-wmLogo.Parent = Watermark
+    local wmTG = Instance.new("UIGradient")
+    wmTG.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 170, 255))
+    })
+    wmTG.Parent = wmTitle
 
-local wmTitle = Instance.new("TextLabel")
-wmTitle.Name = "Title"
-wmTitle.Size = UDim2.new(0, 0, 1, 0)
-wmTitle.AutomaticSize = Enum.AutomaticSize.X
-wmTitle.BackgroundTransparency = 1
-wmTitle.Font = Enum.Font.GothamBold
-wmTitle.Text = TitleText
-wmTitle.TextColor3 = Color3.fromRGB(240, 240, 255)
-wmTitle.TextSize = 14
-wmTitle.TextXAlignment = Enum.TextXAlignment.Left
-wmTitle.ZIndex = 51
-wmTitle.LayoutOrder = 2
-wmTitle.Parent = Watermark
 
-local wmTG = Instance.new("UIGradient")
-wmTG.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 170, 255))
-})
-wmTG.Parent = wmTitle
+    local wmFps = Instance.new("TextLabel")
+    wmFps.Name = "FPS"
+    wmFps.Size = UDim2.new(0, 48, 1, 0)
+    wmFps.Position = UDim2.new(0, 86, 0, 0)
+    wmFps.BackgroundTransparency = 1
+    wmFps.Font = Enum.Font.GothamBold
+    wmFps.Text = "0 FPS"
+    wmFps.TextColor3 = Color3.fromRGB(150, 220, 150)
+    wmFps.TextSize = 12
+    wmFps.TextXAlignment = Enum.TextXAlignment.Center
+    wmFps.ZIndex = 51
+    wmFps.Parent = Watermark
 
-local wmFps = Instance.new("TextLabel")
-wmFps.Name = "FPS"
-wmFps.Size = UDim2.new(0, 0, 1, 0)
-wmFps.AutomaticSize = Enum.AutomaticSize.X
-wmFps.BackgroundTransparency = 1
-wmFps.Font = Enum.Font.Gotham
-wmFps.Text = "0 FPS"
-wmFps.TextColor3 = Color3.fromRGB(150, 220, 150)
-wmFps.TextSize = 12
-wmFps.TextXAlignment = Enum.TextXAlignment.Center
-wmFps.ZIndex = 51
-wmFps.LayoutOrder = 3
-wmFps.Parent = Watermark
+    local wmSep2 = Instance.new("Frame")
+    wmSep2.Size = UDim2.new(0, 1, 0, 14)
+    wmSep2.Position = UDim2.new(0, 136, 0.5, -7)
+    wmSep2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    wmSep2.BackgroundTransparency = 0.8
+    wmSep2.BorderSizePixel = 0
+    wmSep2.ZIndex = 51
+    wmSep2.Parent = Watermark
 
-local wmPing = Instance.new("TextLabel")
-wmPing.Name = "Ping"
-wmPing.Size = UDim2.new(0, 0, 1, 0)
-wmPing.AutomaticSize = Enum.AutomaticSize.X
-wmPing.BackgroundTransparency = 1
-wmPing.Font = Enum.Font.Gotham
-wmPing.Text = "0 ms"
-wmPing.TextColor3 = Color3.fromRGB(230, 200, 130)
-wmPing.TextSize = 12
-wmPing.TextXAlignment = Enum.TextXAlignment.Center
-wmPing.ZIndex = 51
-wmPing.LayoutOrder = 4
-wmPing.Parent = Watermark
+    local wmPing = Instance.new("TextLabel")
+    wmPing.Name = "Ping"
+    wmPing.Size = UDim2.new(0, 48, 1, 0)
+    wmPing.Position = UDim2.new(0, 142, 0, 0)
+    wmPing.BackgroundTransparency = 1
+    wmPing.Font = Enum.Font.GothamBold
+    wmPing.Text = "0 ms"
+    wmPing.TextColor3 = Color3.fromRGB(230, 200, 130)
+    wmPing.TextSize = 12
+    wmPing.TextXAlignment = Enum.TextXAlignment.Center
+    wmPing.ZIndex = 51
+    wmPing.Parent = Watermark
 
     local wmDragging = false
     local wmDragStart, wmStartPos
