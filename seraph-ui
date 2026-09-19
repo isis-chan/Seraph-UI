@@ -1420,7 +1420,7 @@ function Seraph:CreateWindow(config)
     wmFps.Size = UDim2.new(0, 48, 1, 0)
     wmFps.Position = UDim2.new(0, 86, 0, 0)
     wmFps.BackgroundTransparency = 1
-    wmFps.Font = Enum.Font.Code
+    wmFps.Font = Enum.Font.GothamBold
     wmFps.Text = "0 FPS"
     wmFps.TextColor3 = Color3.fromRGB(150, 220, 150)
     wmFps.TextSize = 12
@@ -1442,7 +1442,7 @@ function Seraph:CreateWindow(config)
     wmPing.Size = UDim2.new(0, 48, 1, 0)
     wmPing.Position = UDim2.new(0, 142, 0, 0)
     wmPing.BackgroundTransparency = 1
-    wmPing.Font = Enum.Font.Code
+    wmPing.Font = Enum.Font.GothamBold
     wmPing.Text = "0 ms"
     wmPing.TextColor3 = Color3.fromRGB(230, 200, 130)
     wmPing.TextSize = 12
