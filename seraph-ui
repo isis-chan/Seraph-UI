@@ -1420,15 +1420,7 @@ function Seraph:CreateWindow(config)
     })
     wmTG.Parent = wmTitle
 
-    local wmSep1 = Instance.new("Frame")
-    wmSep1.Size = UDim2.new(0, 1, 0, 14)
-    wmSep1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    wmSep1.BackgroundTransparency = 0.8
-    wmSep1.BorderSizePixel = 0
-    wmSep1.ZIndex = 51
-    wmSep1.LayoutOrder = 3
-    wmSep1.Parent = Watermark
-
+  
     local wmFps = Instance.new("TextLabel")
     wmFps.Name = "FPS"
     wmFps.Size = UDim2.new(0, 0, 1, 0)
